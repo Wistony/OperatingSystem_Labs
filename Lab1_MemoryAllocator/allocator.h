@@ -1,4 +1,4 @@
-#include <cstdint>;
+#include <cstdint>
 
 using namespace std;
 
@@ -16,7 +16,23 @@ struct Header
 class Allocator
 {
 	static uint8_t heap[HEAP_SIZE];
-	
+	static uintptr_t* head;
+	static uintptr_t* end;
+
+public:
+	Allocator();
+
+	void* mem_alloc(size_t);
+	void* mem_realloc(void*, size_t);
+	void mem_free(void*);
+	void mem_dump();
 
 };
+
+uint8_t Allocator::heap[HEAP_SIZE];
+uintptr_t* Allocator::head;
+uintptr_t* Allocator::end;
+
+
+
 
