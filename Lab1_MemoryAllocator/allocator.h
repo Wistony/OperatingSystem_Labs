@@ -4,7 +4,6 @@ using namespace std;
 
 #define HEAP_SIZE 256
 
-//Header size is 8 bytes
 struct Header
 {
 	uint16_t size;
@@ -19,6 +18,7 @@ class Allocator
 	static uint8_t* head;
 	static uint8_t* end;
 
+	size_t align(size_t);
 	Header* getHeader(uint8_t*);
 	void addHeader(Header*, size_t, size_t, bool);
 

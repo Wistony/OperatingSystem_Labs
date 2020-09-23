@@ -32,9 +32,41 @@ Header* Allocator::getHeader(uint8_t* currentHead)
 	return (Header*)(currentHead - sizeof(Header));
 }
 
+size_t Allocator::align(size_t size)
+{
+	return size + ((4 - (size % 4)) % 4);
+}
+
 void* Allocator::mem_alloc(size_t size)
 {
-	return nullptr;
+	uint8_t* currPtr = heap + sizeof(Header);
+	size_t alignedSize = align(size);
+	size_t neededSize = alignedSize + sizeof(Header);
+
+	uint8_t* newPtr = nullptr;
+
+	size_t occupiedSize = 0;
+	while (occupiedSize < HEAP_SIZE) 
+	{
+		Header* block = getHeader(currPtr);
+		occupiedSize = occupiedSize + block->size + sizeof(Header);
+
+		if (block->isAvailable && block->size >= neededSize)
+		{
+			size_t availableSize = block->size;
+			
+			block->isAvailable = false;
+			block->size = alignedSize;
+
+			uint8_t* nextBlock = currPtr + alignedSize;
+			addHeader((Header*)nextBlock, availableSize - neededSize, alignedSize, true);
+			head = nextBlock + sizeof(Header);
+			newPtr = head;
+		}
+
+		currPtr = currPtr + block->size + sizeof(Header);
+	}
+	return newPtr;
 }
 
 void* Allocator::mem_realloc(void* address, size_t size)
@@ -49,5 +81,24 @@ void Allocator::mem_free(void* address)
 
 void Allocator::mem_dump()
 {
+	uint8_t* currPtr = heap + sizeof(Header);
 
+	size_t occupiedSize = 0;
+	int i = 0;
+
+	cout << "===== Memory Dump =====" << endl;
+	while (occupiedSize < HEAP_SIZE)
+	{
+		i++;
+		Header* block = getHeader(currPtr);
+		occupiedSize = occupiedSize + block->size + sizeof(Header);
+
+		cout << "Block#" << i << endl;
+		cout << "Address: " << (uintptr_t*)currPtr << endl;
+		cout << "Size: " << block->size << (block->size > 1 ? " bytes" : " byte") << endl;
+		cout << "Previous Size: " << block->prevSize << endl;
+		cout << "-----------------------" << endl;
+
+		currPtr = currPtr + block->size + sizeof(Header);
+	}
 }
