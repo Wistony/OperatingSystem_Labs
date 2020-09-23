@@ -19,6 +19,7 @@ class Allocator
 	static uint8_t* head;
 	static uint8_t* end;
 
+	Header* getHeader(uint8_t*);
 	void addHeader(Header*, size_t, size_t, bool);
 
 public:
