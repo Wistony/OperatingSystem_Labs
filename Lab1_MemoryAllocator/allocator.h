@@ -16,7 +16,6 @@ class Allocator
 {
 	static uint8_t heap[HEAP_SIZE];
 	static uint8_t* head;
-	static uint8_t* end;
 
 	size_t align(size_t);
 	Header* getHeader(uint8_t*);
