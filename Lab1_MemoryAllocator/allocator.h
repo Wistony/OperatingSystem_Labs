@@ -16,8 +16,10 @@ struct Header
 class Allocator
 {
 	static uint8_t heap[HEAP_SIZE];
-	static uintptr_t* head;
-	static uintptr_t* end;
+	static uint8_t* head;
+	static uint8_t* end;
+
+	void addHeader(Header*, size_t, size_t, bool);
 
 public:
 	Allocator();
@@ -28,10 +30,6 @@ public:
 	void mem_dump();
 
 };
-
-uint8_t Allocator::heap[HEAP_SIZE];
-uintptr_t* Allocator::head;
-uintptr_t* Allocator::end;
 
 
 
