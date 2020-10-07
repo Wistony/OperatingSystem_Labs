@@ -1,5 +1,4 @@
 #include <cstdint>
-
 using namespace std;
 
 #define HEAP_SIZE 256
@@ -21,6 +20,7 @@ class Allocator
 	size_t align(size_t);
 	Header* getHeader(uint8_t*);
 	void addHeader(Header*, size_t, size_t, bool);
+	void addNextBlock(uint8_t* , size_t, size_t, size_t, size_t);
 
 public:
 	Allocator();
@@ -29,7 +29,6 @@ public:
 	void* mem_realloc(void*, size_t);
 	void mem_free(void*);
 	void mem_dump();
-
 };
 
 

@@ -119,16 +119,10 @@ void* Allocator::mem_realloc(void* address, size_t size)
 		return reallocBlock;
 	}
 
-	uint8_t* prevBlock = NULL;
-	if (blockNum > 1)
-	{
-		prevBlock = reallocBlock - getHeader(reallocBlock)->prevSize - sizeof(Header);
-	}
-	uint8_t* nextBlock = NULL;
-	if (blockNum < totalBlocks)
-	{
-		nextBlock = reallocBlock + getHeader(reallocBlock)->size + sizeof(Header);
-	}
+	uint8_t* prevBlock = blockNum > 1 ? reallocBlock - getHeader(reallocBlock)->prevSize - sizeof(Header) : NULL;
+	uint8_t* nextBlock = blockNum < totalBlocks ? reallocBlock + getHeader(reallocBlock)->size + sizeof(Header) : NULL;
+	bool prevFree = prevBlock != NULL && getHeader(prevBlock)->isAvailable;
+	bool nextFree = nextBlock != NULL && getHeader(nextBlock)->isAvailable;
 
 	if (neededBlockSize < getHeader(reallocBlock)->size)
 	{
@@ -138,167 +132,109 @@ void* Allocator::mem_realloc(void* address, size_t size)
 		if (availableSize - neededBlockSize > sizeof(Header))
 		{
 			getHeader(reallocBlock)->size = neededBlockSize;
-			uint8_t* nextHeader = reallocBlock + neededBlockSize;
-			addHeader((Header*)nextHeader, availableSize - neededBlockSize - sizeof(Header), neededBlockSize, true);
-			if (blockNum + 1 < blockCount)
-			{
-				uint8_t* newBlock = nextHeader + sizeof(Header);
-				uint8_t* ptr = newBlock + getHeader(newBlock)->size + sizeof(Header);
-				getHeader(ptr)->prevSize = getHeader(nextBlock)->size;
-			}
+			addNextBlock(reallocBlock, neededBlockSize, availableSize, blockNum, blockCount);
 		}
 
 		newPtr = reallocBlock;
 	}
 	else 
 	{
-		if (prevBlock && nextBlock && getHeader(prevBlock)->isAvailable && getHeader(nextBlock)->isAvailable)
+		size_t withPrevNextSize = prevFree && nextFree ? getHeader(prevBlock)->size + getHeader(reallocBlock)->size + getHeader(nextBlock)->size + 2 * sizeof(Header) : 0;
+		size_t withPrevSize = prevFree ? getHeader(prevBlock)->size + getHeader(reallocBlock)->size + sizeof(Header) : 0;
+		size_t withNextSize = nextFree ? getHeader(reallocBlock)->size + getHeader(nextBlock)->size + sizeof(Header) : 0;
+		if (withPrevNextSize > neededBlockSize)
 		{
-			size_t availableSize = getHeader(prevBlock)->size + getHeader(reallocBlock)->size + getHeader(nextBlock)->size + 2 * sizeof(Header);
-
-			if (availableSize > neededBlockSize)
+			totalBlocks -= 2;
+			getHeader(prevBlock)->isAvailable = false;
+			for (size_t i = 0; i < getHeader(reallocBlock)->size; i++)
 			{
-				totalBlocks -= 2;
-				getHeader(prevBlock)->isAvailable = false;
-				for (size_t i = 0; i < getHeader(reallocBlock)->size; i++)
-				{
-					*(prevBlock + i) = *(reallocBlock + i);
-				}
-				if (availableSize - neededBlockSize > sizeof(Header))
-				{
-					getHeader(prevBlock)->size = neededBlockSize;
-					uint8_t* nextHeader = prevBlock + neededBlockSize;
-					addHeader((Header*)nextHeader, availableSize - neededBlockSize - sizeof(Header), neededBlockSize, true);
-					if (blockNum + 1 < blockCount)
-					{
-						uint8_t* newBlock = nextHeader + sizeof(Header);
-						uint8_t* ptr = newBlock + getHeader(newBlock)->size + sizeof(Header);
-						getHeader(ptr)->prevSize = getHeader(nextBlock)->size;
-					}
-				}
-				else
-				{
-					getHeader(prevBlock)->size = availableSize;
-					if (blockNum + 1 < blockCount)
-					{
-						uint8_t* ptr = prevBlock + availableSize + sizeof(Header);
-						getHeader(ptr)->prevSize = availableSize;
-					}
-				}
-				newPtr = prevBlock;
+				*(prevBlock + i) = *(reallocBlock + i);
 			}
+			if (withPrevNextSize - neededBlockSize > sizeof(Header))
+			{
+				getHeader(prevBlock)->size = neededBlockSize;
+				addNextBlock(prevBlock, neededBlockSize, withPrevNextSize, blockNum, blockCount);
+			}
+			else
+			{
+				getHeader(prevBlock)->size = withPrevNextSize;
+				if (blockNum + 1 < blockCount)
+				{
+					uint8_t* ptr = prevBlock + withPrevNextSize + sizeof(Header);
+					getHeader(ptr)->prevSize = withPrevNextSize;
+				}
+			}
+			newPtr = prevBlock;
 		}
-		else if (prevBlock && getHeader(prevBlock)->isAvailable)
+		else if (withPrevSize > neededBlockSize)
 		{
-			size_t availableSize = getHeader(prevBlock)->size + getHeader(reallocBlock)->size + sizeof(Header);
-			if (availableSize > neededBlockSize)
+			totalBlocks--;
+			getHeader(prevBlock)->isAvailable = false;
+			for (size_t i = 0; i < getHeader(reallocBlock)->size; i++)
 			{
-				totalBlocks--;
-				getHeader(prevBlock)->isAvailable = false;
-				for (size_t i = 0; i < getHeader(reallocBlock)->size; i++)
-				{
-					*(prevBlock + i) = *(reallocBlock + i);
-				}
-				if (availableSize - neededBlockSize > sizeof(Header))
-				{
-					getHeader(prevBlock)->size = neededBlockSize;
-					uint8_t* nextHeader = prevBlock + neededBlockSize;
-					addHeader((Header*)nextHeader, availableSize - neededBlockSize - sizeof(Header), neededBlockSize, true);
-					if (blockNum + 1 < blockCount)
-					{
-						uint8_t* newBlock = nextHeader + sizeof(Header);
-						uint8_t* ptr = newBlock + getHeader(newBlock)->size + sizeof(Header);
-						getHeader(ptr)->prevSize = getHeader(nextBlock)->size;
-					}
-				}
-				else
-				{
-					getHeader(prevBlock)->size = availableSize;
-					if (blockNum + 1 < blockCount)
-					{
-						uint8_t* ptr = prevBlock + availableSize + sizeof(Header);
-						getHeader(ptr)->prevSize = availableSize;
-					}
-				}
-
-				newPtr = prevBlock;
+				*(prevBlock + i) = *(reallocBlock + i);
 			}
+			if (withPrevSize - neededBlockSize > sizeof(Header))
+			{
+				getHeader(prevBlock)->size = neededBlockSize;
+				addNextBlock(prevBlock, neededBlockSize, withPrevSize, blockNum, blockCount);
+			}
+			else
+			{
+				getHeader(prevBlock)->size = withPrevSize;
+				if (blockNum + 1 < blockCount)
+				{
+					uint8_t* ptr = prevBlock + withPrevSize + sizeof(Header);
+					getHeader(ptr)->prevSize = withPrevSize;
+				}
+			}
+
+			newPtr = prevBlock;
 		}
-		else if (nextBlock && getHeader(nextBlock)->isAvailable)
+		else if (withNextSize > neededBlockSize)
 		{
-			size_t availableSize = getHeader(reallocBlock)->size + getHeader(nextBlock)->size + sizeof(Header);
-			if (availableSize > neededBlockSize)
+			totalBlocks--;
+			getHeader(reallocBlock)->isAvailable = false;
+			if (withNextSize - neededBlockSize > sizeof(Header))
 			{
-				totalBlocks--;
-				getHeader(reallocBlock)->isAvailable = false;
-				if (availableSize - neededBlockSize > sizeof(Header))
-				{
-					getHeader(reallocBlock)->size = neededBlockSize;
-					uint8_t* nextHeader = reallocBlock + neededBlockSize;
-					addHeader((Header*)nextHeader, availableSize - neededBlockSize - sizeof(Header), neededBlockSize, true);
-					if (blockNum + 1 < blockCount)
-					{
-						uint8_t* newBlock = nextHeader + sizeof(Header);
-						uint8_t* ptr = newBlock + getHeader(newBlock)->size + sizeof(Header);
-						getHeader(ptr)->prevSize = getHeader(nextBlock)->size;
-					}
-				}
-				else
-				{
-					getHeader(reallocBlock)->size = availableSize;
-					if (blockNum + 1 < blockCount)
-					{
-						uint8_t* ptr = reallocBlock + availableSize + sizeof(Header);
-						getHeader(ptr)->prevSize = availableSize;
-					}
-				}
-
-				newPtr = reallocBlock;
+				getHeader(reallocBlock)->size = neededBlockSize;
+				addNextBlock(reallocBlock, neededBlockSize, withNextSize, blockNum, blockCount);
 			}
+			else
+			{
+				getHeader(reallocBlock)->size = withNextSize;
+				if (blockNum + 1 < blockCount)
+				{
+					uint8_t* ptr = reallocBlock + withNextSize + sizeof(Header);
+					getHeader(ptr)->prevSize = withNextSize;
+				}
+			}
+
+			newPtr = reallocBlock;
 		}
 		else 
 		{
 			newPtr = (uint8_t*)mem_alloc(neededBlockSize);
 			if (newPtr) 
 			{
-				getHeader(reallocBlock)->isAvailable = true;
+				mem_free(reallocBlock);
 			}
 		}
 	}
 	return newPtr;
 }
-//uint8_t* reallocBlockPtr = (uint8_t*)address;
-//size_t neededBlockSize = align(size);
-//uint8_t* newPtr = NULL;
-//
-//uint8_t* prevBlock;
-//if (blockNum > 1)
-//{
-//	prevBlock = reallocBlockPtr - getHeader(reallocBlockPtr)->prevSize - sizeof(Header);
-//}
-//uint8_t* nextBlock;
-//if (blockNum < totalBlocks)
-//{
-//	nextBlock = reallocBlockPtr + getHeader(reallocBlockPtr)->size + sizeof(Header);
-//}
-//
-//if (neededBlockSize <= getHeader(reallocBlockPtr)->size)
-//{
-//	newPtr = (uint8_t*)address;
-//}
-//else
-//{
-//	newPtr = (uint8_t*)mem_alloc(neededBlockSize);
-//
-//	for (size_t i = 0; i < getHeader(reallocBlockPtr)->size; i++)
-//	{
-//		*(newPtr + i) = *(reallocBlockPtr + i);
-//	}
-//
-//	mem_free(reallocBlockPtr);
-//}
-//
-//return newPtr;
+
+void Allocator::addNextBlock(uint8_t* currBlock, size_t neededBlockSize, size_t availableSize, size_t blockNum, size_t blockCount) 
+{
+	uint8_t* nextHeader = currBlock + neededBlockSize;
+	addHeader((Header*)nextHeader, availableSize - neededBlockSize - sizeof(Header), neededBlockSize, true);
+	if (blockNum + 1 < blockCount)
+	{
+		uint8_t* newBlock = nextHeader + sizeof(Header);
+		uint8_t* ptr = newBlock + getHeader(newBlock)->size + sizeof(Header);
+		getHeader(ptr)->prevSize = getHeader(newBlock)->size;
+	}
+}
 
 void Allocator::mem_free(void* address)
 {
