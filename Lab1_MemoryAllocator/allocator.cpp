@@ -153,7 +153,7 @@ void* Allocator::mem_realloc(void* address, size_t size)
 			if (withPrevNextSize - neededBlockSize > sizeof(Header))
 			{
 				getHeader(prevBlock)->size = neededBlockSize;
-				addNextBlock(prevBlock, neededBlockSize, withPrevNextSize, blockNum, blockCount);
+				addNextBlock(prevBlock, neededBlockSize, withPrevNextSize, blockNum + 1, blockCount);
 			}
 			else
 			{
@@ -198,7 +198,7 @@ void* Allocator::mem_realloc(void* address, size_t size)
 			if (withNextSize - neededBlockSize > sizeof(Header))
 			{
 				getHeader(reallocBlock)->size = neededBlockSize;
-				addNextBlock(reallocBlock, neededBlockSize, withNextSize, blockNum, blockCount);
+				addNextBlock(reallocBlock, neededBlockSize, withNextSize, blockNum + 1, blockCount);
 			}
 			else
 			{
@@ -221,6 +221,13 @@ void* Allocator::mem_realloc(void* address, size_t size)
 			}
 		}
 	}
+	if (newPtr) 
+	{
+		cout << endl << "mem_realloc(" << (uintptr_t*)address << ", " << size << ") : Address: " << (uintptr_t*)newPtr << endl;
+	}
+	else {
+		cout << endl << "### Reallocating Error - not enough memory! ###" << endl;
+	}
 	return newPtr;
 }
 
@@ -228,11 +235,16 @@ void Allocator::addNextBlock(uint8_t* currBlock, size_t neededBlockSize, size_t 
 {
 	uint8_t* nextHeader = currBlock + neededBlockSize;
 	addHeader((Header*)nextHeader, availableSize - neededBlockSize - sizeof(Header), neededBlockSize, true);
-	if (blockNum + 1 < blockCount)
+	if (blockNum < blockCount)
 	{
 		uint8_t* newBlock = nextHeader + sizeof(Header);
 		uint8_t* ptr = newBlock + getHeader(newBlock)->size + sizeof(Header);
 		getHeader(ptr)->prevSize = getHeader(newBlock)->size;
+		if (getHeader(ptr)->isAvailable)
+		{
+				getHeader(newBlock)->size = getHeader(newBlock)->size + getHeader(ptr)->size + sizeof(Header);
+				totalBlocks--;
+		}
 	}
 }
 
@@ -274,7 +286,6 @@ void Allocator::mem_free(void* address)
 
 		if (nextBlock->isAvailable)
 		{
-			cout << "Merge deleting block with next block" << endl;
 			blockForDeleting->size = nextBlock->size + nextBlock->prevSize + sizeof(Header);
 			totalBlocks--;
 		}
@@ -286,7 +297,6 @@ void Allocator::mem_free(void* address)
 		Header* prevBlock = getHeader(prevPtr);
 		if (prevBlock->isAvailable)
 		{
-			cout << "Merge deleting block with previous block" << endl;
 			prevBlock->size = blockForDeleting->size + blockForDeleting->prevSize + sizeof(Header);
 			totalBlocks--;
 		}
@@ -309,7 +319,7 @@ void Allocator::mem_dump()
 
 		cout << "Size: " << block->size << " bytes" << endl;
 		cout << "Available: " << (block->isAvailable ? "true" : "false") << endl;
-		cout << "PrevSize: " << block->prevSize << endl;
+		//cout << "PrevSize: " << block->prevSize << endl;
 		cout << "-----------------------" << endl;
 
 		currPtr = currPtr + block->size + sizeof(Header);
