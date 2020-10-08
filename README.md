@@ -60,4 +60,54 @@ struct Header
 
 #### Приклад роботи
 
+##### Код: 
+
+```
+Allocator alloc;	
+alloc.mem_dump();
+```
+
+##### Вивід: 
+
+##### Код:
+
+```
+int* num = (int*)alloc.mem_alloc(16);
+int* num1 = (int*)alloc.mem_alloc(32);
+int* num2 = (int*)alloc.mem_alloc(8);
+alloc.mem_dump();
+```
+
+##### Вивід: 
+
+
+##### Код:
+
+```
+alloc.mem_free(num2);
+alloc.mem_free(num);
+alloc.mem_dump();
+```
+
+##### Вивід: 
+
+
+##### Код:
+
+```
+int* reallocNum1 = (int*)alloc.mem_realloc(num1, 20);
+alloc.mem_dump();
+```
+
+##### Вивід: 
+
+##### Код:
+
+```
+alloc.mem_free(reallocNum1);
+alloc.mem_dump();
+```
+
+##### Вивід: 
+
 
