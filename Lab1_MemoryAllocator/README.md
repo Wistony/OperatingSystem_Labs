@@ -38,6 +38,8 @@ struct Header
 - Якщо потрібно виділити 3 байти, насправді виділиться 12 = 8 + (3 + 1).
 - Якщо потрібно виділити 9 байтів, насправді виділиться 20 = 8 + (9 + 3).
 
+В даному випадку для алокатора виділяємо кучу розміром в **256 байтів**. Це означає, що максимально даний алокатор може виділити 248 байтів(за умови, якщо вся пам'ять виділена одним блоком і у нас 1 заголовок).
+
 #
 
 - ##### **void\* mem_alloc(size_t)**
@@ -69,6 +71,12 @@ alloc.mem_dump();
 
 ##### Вивід: 
 
+![Screenshot1](https://github.com/Wistony/OperatingSystem_Labs/blob/master/Lab1_MemoryAllocator/img/1.png)
+
+На даний момент уся пам'ять доступна, тому виводиться один блок.
+
+#
+
 ##### Код:
 
 ```
@@ -80,6 +88,11 @@ alloc.mem_dump();
 
 ##### Вивід: 
 
+![Screenshot2](https://github.com/Wistony/OperatingSystem_Labs/blob/master/Lab1_MemoryAllocator/img/2.png)
+
+Виділяємо три блоки розмірами в 16, 32 та 8 байтів. Бачимо що на даний момент доступно: 256 - (8 + 16) - (8 + 32) - (8 + 8) - 8 = 164 байти
+
+#
 
 ##### Код:
 
@@ -91,6 +104,11 @@ alloc.mem_dump();
 
 ##### Вивід: 
 
+![Screenshot3](https://github.com/Wistony/OperatingSystem_Labs/blob/master/Lab1_MemoryAllocator/img/3.png)
+
+Звільняємо перший та третій блок, тепер вони доступні для використання: **isAvailable: true**
+
+#
 
 ##### Код:
 
@@ -101,6 +119,12 @@ alloc.mem_dump();
 
 ##### Вивід: 
 
+![Screenshot4](https://github.com/Wistony/OperatingSystem_Labs/blob/master/Lab1_MemoryAllocator/img/4.png)
+
+Змінюємо розмір другого блоку до 20, 12 "зайвих" байтів із цього блоку переходять в наступний блок.
+
+#
+
 ##### Код:
 
 ```
@@ -110,4 +134,7 @@ alloc.mem_dump();
 
 ##### Вивід: 
 
+![Screenshot5](https://github.com/Wistony/OperatingSystem_Labs/blob/master/Lab1_MemoryAllocator/img/5.png)
+
+Звільняємо зайнятий блок, після чого всі блоки з'єднаються в один(адже всі є вільними і йдуть один за одним)
 
