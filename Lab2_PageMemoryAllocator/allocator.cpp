@@ -47,13 +47,32 @@ void Allocator:: initializeClassifiedPages()
 	}
 }
 
+size_t Allocator::roundToPowerOfTwo(size_t size)
+{
+	size_t powerOfTwo = 1;
+
+	while (powerOfTwo < size) 
+	{
+		powerOfTwo <<= 1;
+	}
+
+	return powerOfTwo;
+}
+
 void* Allocator::mem_alloc(size_t size)
 {
+	//1 byte needed to header - bool flags(determines block is free or not)
+	size += 1;
+
+	size_t degreeOfTwo = log10(size) / log10(2);
+	size_t neededSize = pow(2, degreeOfTwo + 1);
+
 	return NULL;
 }
 
 void* Allocator::mem_realloc(void* address, size_t size)
 {
+
 	return NULL;
 }
 
