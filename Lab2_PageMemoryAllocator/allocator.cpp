@@ -41,7 +41,7 @@ void Allocator:: initializeClassifiedPages()
 {
 	int classSize = 8;
 
-	for (; classSize <= PAGE_SIZE / 2; classSize >>= 1)
+	for (; classSize <= PAGE_SIZE / 2; classSize <<= 1)
 	{
 		classifiedPages.insert({ classSize, {} });
 	}
