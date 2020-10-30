@@ -1,5 +1,7 @@
 #include "allocator.h"
 #include <iostream>
+#include <algorithm>
+#include <iomanip>
 
 uint8_t Allocator::memory[MEMORY_SIZE];
 const size_t Allocator::pageNum;
@@ -143,10 +145,8 @@ void* Allocator::mem_alloc(size_t size)
 	}
 	else 
 	{
-		size_t neededSize = roundToPowerOfTwo(size);
-
-		size_t remainderOfDivision = neededSize % PAGE_SIZE;
-		size_t neededNumOfPage = neededSize / PAGE_SIZE + (remainderOfDivision == 0 ? 0 : 1);
+		size_t remainderOfDivision = size % PAGE_SIZE;
+		size_t neededNumOfPage = size / PAGE_SIZE + (remainderOfDivision == 0 ? 0 : 1);
 
 		if (freePages.size() < neededNumOfPage)
 		{
@@ -161,8 +161,8 @@ void* Allocator::mem_alloc(size_t size)
 			uint8_t* pagePtr = (uint8_t*)freePages[0];
 			uint8_t* nextPagePtr = neededNumOfPage == i ? NULL : (uint8_t*)freePages[1];
 
-			pageHeaders[pagePtr].state = MultiPageBlocks;
-			pageHeaders[pagePtr].classSize = neededSize;
+			pageHeaders[pagePtr].state = MultiPageBlock;
+			pageHeaders[pagePtr].classSize = neededNumOfPage * PAGE_SIZE;
 			pageHeaders[pagePtr].blocksAmount = neededNumOfPage - i;
 			pageHeaders[pagePtr].freeBlockPtr = nextPagePtr;
 
@@ -186,5 +186,60 @@ void Allocator::mem_free(void* address)
 
 void Allocator::mem_dump() 
 {
+	uint8_t* currPage = memory;
 
+	cout << "### mem_dump ###" << endl;
+	cout << "============================================" << endl;
+	for (int i = 0; i < pageNum; i++)
+	{
+		PageHeader header = pageHeaders[currPage];
+
+		string state;
+		switch (header.state)
+		{
+		case Free: 
+			state = "Free";
+			break;
+		case DividedIntoBlocks:
+			state = "DividedIntoBlocks";
+			break;
+		case MultiPageBlock:
+			state = "MultiPageBlock";
+			break;
+		}
+
+		int padding = 2 + (i < 9 ? 1 : 0);
+		cout << "Page" << setw(padding) << "#" << i + 1;
+		cout << ". Address: " << (uint16_t*)currPage;
+		cout << ". PageState: " << state;
+		if (header.state == DividedIntoBlocks)
+		{
+			cout << ". ClassSize: " << header.classSize << endl << endl;
+
+			uint8_t* currBlock = currPage;
+			for (int j = 0; j < PAGE_SIZE / header.classSize; j++)
+			{
+				padding = 2 + (j < 9 ? 1 : 0);
+				cout << "\tBlock" << setw(padding) << "#" << j + 1;
+				cout << ". Address:" << (uint16_t*)currBlock;
+				cout << ". IsFree: " << (bool)*currBlock << endl;
+				currBlock += header.classSize;
+			}
+			cout << endl;
+		}
+		else if (header.state == MultiPageBlock) 
+		{
+			size_t numOfPage = header.classSize / PAGE_SIZE;
+			cout << ". BlockSize: " << header.classSize;
+			cout << ". Part#" << numOfPage - header.blocksAmount;
+			cout << ". NextPage: " << (uint16_t*)header.freeBlockPtr << endl;
+		}
+		else 
+		{
+			cout << ". PageSize: " << PAGE_SIZE << endl;
+		}
+
+		currPage += PAGE_SIZE;
+	}
+	cout << "============================================" << endl;
 }

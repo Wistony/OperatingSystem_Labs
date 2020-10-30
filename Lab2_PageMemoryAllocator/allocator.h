@@ -11,7 +11,7 @@ enum PageState
 {
 	Free,
 	DividedIntoBlocks,
-	MultiPageBlocks
+	MultiPageBlock
 };
 
 struct PageHeader 
