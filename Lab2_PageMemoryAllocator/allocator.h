@@ -18,7 +18,7 @@ struct PageHeader
 {
 	PageState state;
 	size_t classSize;
-	size_t freeBlocksAmount;
+	size_t blocksAmount;
 	uint8_t* freeBlockPtr;
 };
 

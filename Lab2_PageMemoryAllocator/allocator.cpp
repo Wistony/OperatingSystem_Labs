@@ -79,7 +79,7 @@ bool Allocator::dividePageIntoBlocks(size_t classSize)
 
 	pageHeaders[pagePtr].state = DividedIntoBlocks;
 	pageHeaders[pagePtr].classSize = classSize;
-	pageHeaders[pagePtr].freeBlocksAmount = PAGE_SIZE / classSize;
+	pageHeaders[pagePtr].blocksAmount = PAGE_SIZE / classSize;
 	pageHeaders[pagePtr].freeBlockPtr = pagePtr;
 
 	classifiedPages[classSize].push_back(pagePtr);
@@ -106,60 +106,71 @@ void* Allocator::findFreeBlock(uint8_t* pagePtr, size_t blockSize)
 
 void* Allocator::mem_alloc(size_t size)
 {
-	//size incremented, because 1 byte needed to header, which consist bool flag(determines block is free or not)
-	size_t neededSize = roundToPowerOfTwo(++size);
+	void* ptr = NULL;
 
-	if (neededSize <= PAGE_SIZE / 2) 
+	if (size <= PAGE_SIZE / 2) 
 	{
-		if (classifiedPages[neededSize].empty()) 
+		//size incremented, because 1 byte needed to header, which consist bool flag(determines block is free or not)
+		size_t classSize = roundToPowerOfTwo(++size);
+
+		if (classifiedPages[classSize].empty()) 
 		{
-			if (!dividePageIntoBlocks(neededSize)) 
+			if (!dividePageIntoBlocks(classSize))
 			{
 				cout << "### All memory is occupied! There is no page with corresponding class! ###";
 				return NULL;
 			}
 		}
 
-		uint8_t* pagePtr = (uint8_t*)classifiedPages[neededSize].at(0);
+		uint8_t* pagePtr = (uint8_t*)classifiedPages[classSize].at(0);
 		uint8_t* allocBlock = pageHeaders[pagePtr].freeBlockPtr;
 
 		*allocBlock = false;
-		pageHeaders[pagePtr].freeBlocksAmount -= 1;
+		pageHeaders[pagePtr].blocksAmount -= 1;
 
-		if (pageHeaders[pagePtr].freeBlocksAmount > 0) 
+		if (pageHeaders[pagePtr].blocksAmount > 0) 
 		{
-			pageHeaders[pagePtr].freeBlockPtr = (uint8_t*)findFreeBlock(pagePtr, neededSize);
+			pageHeaders[pagePtr].freeBlockPtr = (uint8_t*)findFreeBlock(pagePtr, classSize);
 		}
 		else 
 		{
-			vector<void*> classPagePtr = classifiedPages[neededSize];
+			vector<void*> classPagePtr = classifiedPages[classSize];
 			auto iterator = find(classPagePtr.begin(), classPagePtr.end(), pagePtr);
-			classifiedPages[neededSize].erase(iterator);
+			classifiedPages[classSize].erase(iterator);
 		}
 
-		vector<void*> g = classifiedPages[neededSize];
-
-		for (int i = 0; i < g.size(); i++)
-		{
-			uint8_t* pagePtr = (uint8_t*)g[i];
-
-			uint8_t* currPtr = (uint8_t*)g[i];
-
-			int j = 0;
-			while (currPtr != pagePtr + PAGE_SIZE)
-			{
-				cout << "Block #" << j << " address:" << (uint16_t*)currPtr << " isFree: " << (bool)*currPtr << endl;
-				currPtr += neededSize;
-				j++;
-			}
-		}
+		ptr = allocBlock;
 	}
 	else 
 	{
+		size_t neededSize = roundToPowerOfTwo(size);
 
+		size_t remainderOfDivision = neededSize % PAGE_SIZE;
+		size_t neededNumOfPage = neededSize / PAGE_SIZE + (remainderOfDivision == 0 ? 0 : 1);
+
+		if (freePages.size() < neededNumOfPage)
+		{
+			cout << "### Not enough memory to allocate! ###";
+			return NULL;
+		}
+
+		ptr = freePages[0];
+
+		for (int i = 1; i <= neededNumOfPage; i++)
+		{
+			uint8_t* pagePtr = (uint8_t*)freePages[0];
+			uint8_t* nextPagePtr = neededNumOfPage == i ? NULL : (uint8_t*)freePages[1];
+
+			pageHeaders[pagePtr].state = MultiPageBlocks;
+			pageHeaders[pagePtr].classSize = neededSize;
+			pageHeaders[pagePtr].blocksAmount = neededNumOfPage - i;
+			pageHeaders[pagePtr].freeBlockPtr = nextPagePtr;
+
+			freePages.erase(freePages.begin());
+		}
 	}
 
-	return NULL;
+	return ptr;
 }
 
 void* Allocator::mem_realloc(void* address, size_t size)
