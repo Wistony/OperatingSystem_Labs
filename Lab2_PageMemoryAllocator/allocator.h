@@ -18,7 +18,7 @@ struct PageHeader
 {
 	PageState state;
 	size_t classSize;
-	size_t freeBlockAmount;
+	size_t freeBlocksAmount;
 	uint8_t* freeBlockPtr;
 };
 
@@ -34,10 +34,12 @@ private:
 	void initializeFreePages();
 	void initializePageHeaders();
 	void initializeClassifiedPages();
+	size_t roundToPowerOfTwo(size_t);
+	bool dividePageIntoBlocks(size_t);
+	void* findFreeBlock(uint8_t*, size_t);
 
 public: 
 	Allocator();
-	size_t roundToPowerOfTwo(size_t);
 
 	void* mem_alloc(size_t);
 	void* mem_realloc(void*, size_t);

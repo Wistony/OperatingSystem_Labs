@@ -59,13 +59,105 @@ size_t Allocator::roundToPowerOfTwo(size_t size)
 	return powerOfTwo;
 }
 
+bool Allocator::dividePageIntoBlocks(size_t classSize) 
+{
+	if (freePages.empty())
+	{
+		return false;
+	}
+
+	uint8_t* pagePtr = (uint8_t*)freePages[0];
+	freePages.erase(freePages.begin());
+
+	uint8_t* currPtr = (uint8_t*)pagePtr;
+
+	while (currPtr != pagePtr + PAGE_SIZE) 
+	{
+		*currPtr = true;
+		currPtr += classSize;
+	}
+
+	pageHeaders[pagePtr].state = DividedIntoBlocks;
+	pageHeaders[pagePtr].classSize = classSize;
+	pageHeaders[pagePtr].freeBlocksAmount = PAGE_SIZE / classSize;
+	pageHeaders[pagePtr].freeBlockPtr = pagePtr;
+
+	classifiedPages[classSize].push_back(pagePtr);
+
+	return true;
+}
+
+void* Allocator::findFreeBlock(uint8_t* pagePtr, size_t blockSize)
+{
+	uint8_t* currPtr = pagePtr;
+
+	while (currPtr != pagePtr + PAGE_SIZE) 
+	{
+		if ((bool)*currPtr) 
+		{
+			return currPtr;
+		}
+
+		currPtr += blockSize;
+	}
+
+	return NULL;
+}
+
 void* Allocator::mem_alloc(size_t size)
 {
-	//1 byte needed to header - bool flags(determines block is free or not)
-	size += 1;
+	//size incremented, because 1 byte needed to header, which consist bool flag(determines block is free or not)
+	size_t neededSize = roundToPowerOfTwo(++size);
 
-	size_t degreeOfTwo = log10(size) / log10(2);
-	size_t neededSize = pow(2, degreeOfTwo + 1);
+	if (neededSize <= PAGE_SIZE / 2) 
+	{
+		if (classifiedPages[neededSize].empty()) 
+		{
+			if (!dividePageIntoBlocks(neededSize)) 
+			{
+				cout << "### All memory is occupied! There is no page with corresponding class! ###";
+				return NULL;
+			}
+		}
+
+		uint8_t* pagePtr = (uint8_t*)classifiedPages[neededSize].at(0);
+		uint8_t* allocBlock = pageHeaders[pagePtr].freeBlockPtr;
+
+		*allocBlock = false;
+		pageHeaders[pagePtr].freeBlocksAmount -= 1;
+
+		if (pageHeaders[pagePtr].freeBlocksAmount > 0) 
+		{
+			pageHeaders[pagePtr].freeBlockPtr = (uint8_t*)findFreeBlock(pagePtr, neededSize);
+		}
+		else 
+		{
+			vector<void*> classPagePtr = classifiedPages[neededSize];
+			auto iterator = find(classPagePtr.begin(), classPagePtr.end(), pagePtr);
+			classifiedPages[neededSize].erase(iterator);
+		}
+
+		vector<void*> g = classifiedPages[neededSize];
+
+		for (int i = 0; i < g.size(); i++)
+		{
+			uint8_t* pagePtr = (uint8_t*)g[i];
+
+			uint8_t* currPtr = (uint8_t*)g[i];
+
+			int j = 0;
+			while (currPtr != pagePtr + PAGE_SIZE)
+			{
+				cout << "Block #" << j << " address:" << (uint16_t*)currPtr << " isFree: " << (bool)*currPtr << endl;
+				currPtr += neededSize;
+				j++;
+			}
+		}
+	}
+	else 
+	{
+
+	}
 
 	return NULL;
 }
