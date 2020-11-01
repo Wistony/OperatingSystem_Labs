@@ -109,7 +109,7 @@ void* Allocator::findFreeBlock(uint8_t* pagePtr, size_t blockSize)
 size_t Allocator::calculateNumOfPage(size_t size) 
 {
 	size_t remainderOfDivision = size % PAGE_SIZE;
-	size_t neededNumOfPage = size / PAGE_SIZE + (remainderOfDivision == 0 ? 0 : 1);
+	size_t neededNumOfPage = size / PAGE_SIZE + (remainderOfDivision == 0 || size <= PAGE_SIZE / 2 ? 0 : 1);
 	return neededNumOfPage;
 }
 
@@ -245,10 +245,10 @@ void* Allocator::mem_realloc(void* address, size_t size)
 		{
 			uint8_t* currPage = pagePtr;
 			uint8_t* nextPage;
-			for (int i = 1; i <= oldPageNum; i++)
+			for (int i = 0; i < oldPageNum; i++)
 			{
 				nextPage = pageHeaders[currPage].freeBlockPtr;
-				if (i > newPageNum) 
+				if (i >= newPageNum) 
 				{
 					pageHeaders[currPage].state = Free;
 					pageHeaders[currPage].classSize = 0;
@@ -260,11 +260,12 @@ void* Allocator::mem_realloc(void* address, size_t size)
 				else 
 				{
 					pageHeaders[currPage].classSize = newPageNum * PAGE_SIZE;
-					pageHeaders[currPage].blocksAmount = newPageNum - i;
+					pageHeaders[currPage].blocksAmount = newPageNum - i - 1;
 				}
 				currPage = nextPage;
 			}
-			ptr = address;
+			sort(freePages.begin(), freePages.end());
+			ptr = size <= PAGE_SIZE / 2 ? mem_alloc(size) : address;
 		}
 		else if (oldPageNum < newPageNum) 
 		{
@@ -301,14 +302,14 @@ void* Allocator::mem_realloc(void* address, size_t size)
 		}
 		else 
 		{
-			ptr = mem_alloc(classSize);
+			ptr = mem_alloc(size);
 			if (ptr) {
-				for (int i = 0; i < pageHeaders[pagePtr].classSize; i++)
+				for (int i = 0; i < classSize; i++)
 				{
 					*((uint8_t*)ptr + i) = *((uint8_t*)address + i);
 				}
 			}
-			//mem_free(address);
+			mem_free(address);
 		}
 	}
 	return ptr;
@@ -343,9 +344,11 @@ void Allocator::mem_free(void* address)
 			pageHeaders[currPage].classSize = 0;
 			pageHeaders[currPage].blocksAmount = 0;
 			pageHeaders[currPage].freeBlockPtr = NULL;
+			freePages.push_back(currPage);
 
 			currPage = nextPage;
 		}
+		sort(freePages.begin(), freePages.end());
 	}
 	else if (pageHeaders[pagePtr].state == DividedIntoBlocks) 
 	{
@@ -365,6 +368,8 @@ void Allocator::mem_free(void* address)
 		if (pageHeaders[pagePtr].blocksAmount == PAGE_SIZE / classSize) 
 		{
 			pageHeaders[pagePtr] = { Free, 0, 0, NULL };
+			freePages.push_back(pagePtr);
+			sort(freePages.begin(), freePages.end());
 		}
 	}
 	else 
