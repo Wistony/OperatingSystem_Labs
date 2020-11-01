@@ -301,8 +301,14 @@ void* Allocator::mem_realloc(void* address, size_t size)
 		}
 		else 
 		{
-			//mem_free(address);
 			ptr = mem_alloc(classSize);
+			if (ptr) {
+				for (int i = 0; i < pageHeaders[pagePtr].classSize; i++)
+				{
+					*((uint8_t*)ptr + i) = *((uint8_t*)address + i);
+				}
+			}
+			//mem_free(address);
 		}
 	}
 	return ptr;
@@ -310,7 +316,61 @@ void* Allocator::mem_realloc(void* address, size_t size)
 
 void Allocator::mem_free(void* address) 
 {
+	if (!isValid(address))
+	{
+		cout << "### Incorrect address! ###";
+		return;
+	}
 
+	if (freePages.size() == pageNum) 
+	{
+		cout << "### All memory is free! ###";
+		return;
+	}
+
+	size_t pageNumber = ((uint8_t*)address - memory) / PAGE_SIZE;
+	uint8_t* pagePtr = memory + pageNumber * PAGE_SIZE;
+	size_t numOfPage = pageHeaders[pagePtr].blocksAmount + 1;
+
+	if (pageHeaders[pagePtr].state == MultiPageBlock) 
+	{
+		uint8_t* currPage = pagePtr;
+		for (int i = 0; i < numOfPage ; i++) 
+		{
+			uint8_t* nextPage = pageHeaders[currPage].freeBlockPtr;
+
+			pageHeaders[currPage].state = Free;
+			pageHeaders[currPage].classSize = 0;
+			pageHeaders[currPage].blocksAmount = 0;
+			pageHeaders[currPage].freeBlockPtr = NULL;
+
+			currPage = nextPage;
+		}
+	}
+	else if (pageHeaders[pagePtr].state == DividedIntoBlocks) 
+	{
+		size_t classSize = pageHeaders[pagePtr].classSize;
+		uint8_t* currBlock = pagePtr;
+		for (int i = 0; i < PAGE_SIZE / classSize; i++) 
+		{
+			if (currBlock == address) 
+			{
+				*(uint8_t*)address = true;
+				break;
+			}
+			currBlock += classSize;
+		}
+		pageHeaders[pagePtr].blocksAmount += 1;
+
+		if (pageHeaders[pagePtr].blocksAmount == PAGE_SIZE / classSize) 
+		{
+			pageHeaders[pagePtr] = { Free, 0, 0, NULL };
+		}
+	}
+	else 
+	{
+		cout << "### This address is already free! ###";
+	}
 }
 
 void Allocator::mem_dump() 
