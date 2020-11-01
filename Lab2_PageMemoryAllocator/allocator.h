@@ -37,6 +37,8 @@ private:
 	size_t roundToPowerOfTwo(size_t);
 	bool dividePageIntoBlocks(size_t);
 	void* findFreeBlock(uint8_t*, size_t);
+	size_t calculateNumOfPage(size_t);
+	bool isValid(void*);
 
 public: 
 	Allocator();
