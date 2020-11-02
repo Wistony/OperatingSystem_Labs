@@ -63,7 +63,7 @@ alloc.mem_dump();
 ##### Вивід: 
 
 
-![Screenshot1](https://github.com/Wistony/OperatingSystem_Labs/tree/master/Lab2_PageMemoryAllocator/img/1.png)
+![Screenshot1](https://github.com/Wistony/OperatingSystem_Labs/blob/master/Lab2_MemoryAllocator/img/1.png)
 
 На даний момент уся пам'ять доступна, тому усі 16 сторінок вільні.
 
@@ -81,7 +81,7 @@ alloc.mem_dump();
 
 ##### Вивід: 
 
-![Screenshot2](https://github.com/Wistony/OperatingSystem_Labs/tree/master/Lab2_PageMemoryAllocator/img/2.png)
+![Screenshot2](https://github.com/Wistony/OperatingSystem_Labs/blob/master/Lab2_MemoryAllocator/img/2.png)
 
 Виділимо блок пам'яті розміром 20, 30, 97, 110. У перших двох випадках блок поміститься у клас розміром 32 байти, у третьому та четвертому випадку блок поміститься у клас розміром 128 байтів. Оскільки перед цим уся пам'ять була вільна, спочатку вільна сторінка поділиться на блоки розміром 32 байти і 2 блоки буде виділено(адреси блоків зберігаються у вказівниках num та num1). Аналогічна ситуація із блоками розміром 128, оскільки сторінки даного класу перед викликом mem_alloc() не було, спочатку вільна сторінка розіб'ється на блоки по 128, а потім буде виділено 2 блоки (вказівники num2 і num3).
 
@@ -96,7 +96,7 @@ alloc.mem_dump();
 
 ##### Вивід: 
 
-![Screenshot3](https://github.com/Wistony/OperatingSystem_Labs/tree/master/Lab2_PageMemoryAllocator/img/3.png)
+![Screenshot3](https://github.com/Wistony/OperatingSystem_Labs/blob/master/Lab2_MemoryAllocator/img/3.png)
 
 Виділимо блок пам'яті розміром 514 байт. Для цього потрібно виділити 3 сторінки.
 
@@ -112,7 +112,7 @@ alloc.mem_dump();
 
 ##### Вивід: 
 
-![Screenshot4](https://github.com/Wistony/OperatingSystem_Labs/tree/master/Lab2_PageMemoryAllocator/img/4.png)
+![Screenshot4](https://github.com/Wistony/OperatingSystem_Labs/blob/master/Lab2_MemoryAllocator/img/4.png)
 
 Змінюємо розмір багатосторінкового блоку, тепер замість 3 сторінок він займає 1. Змінюємо розмір блоку з адресою num1 до 60 байтів. Блок перейде із класу 32 до класу 64. Перед цим для даного класу буде виділена вільна сторінка.
 
@@ -129,6 +129,6 @@ alloc.mem_dump();
 
 ##### Вивід: 
 
-![Screenshot5](https://github.com/Wistony/OperatingSystem_Labs/tree/master/Lab2_PageMemoryAllocator/img/5.png)
+![Screenshot5](https://github.com/Wistony/OperatingSystem_Labs/blob/master/Lab2_MemoryAllocator/img/5.png)
 
 Звільнимо блок із класу в 32 байти. Оскільки всі блоки в даному класі після цього стануть вільні, то сторінка перейде в стан Free. Далі звільнимо один з блоків класу 128, бачимо, що один блок став вільним. Також звільнимо блок, розмір якого перед цим було зменшено з 3 сторінок до 1.
