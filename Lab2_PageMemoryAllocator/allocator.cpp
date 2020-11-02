@@ -113,6 +113,43 @@ size_t Allocator::calculateNumOfPage(size_t size)
 	return neededNumOfPage;
 }
 
+
+bool Allocator::isValid(void* address)
+{
+	if (address < memory || address > memory + PAGE_SIZE * pageNum)
+	{
+		return false;
+	}
+
+	size_t pageNumber = ((uint8_t*)address - memory) / PAGE_SIZE;
+	uint8_t* pagePtr = memory + pageNumber * PAGE_SIZE;
+	bool isValid = false;
+
+	if (pageHeaders[pagePtr].state == DividedIntoBlocks)
+	{
+		uint8_t* currBlock = pagePtr;
+		for (int i = 0; i < PAGE_SIZE / pageHeaders[pagePtr].classSize; i++)
+		{
+			if (currBlock == address)
+			{
+				isValid = true;
+				break;
+			}
+			currBlock += pageHeaders[pagePtr].classSize;
+		}
+	}
+	else if (pageHeaders[pagePtr].state == MultiPageBlock)
+	{
+		size_t pageNumInBlock = pageHeaders[pagePtr].classSize / PAGE_SIZE;
+		if (pageHeaders[pagePtr].blocksAmount + 1 == pageNumInBlock)
+		{
+			isValid = pagePtr == address;
+		}
+	}
+
+	return isValid;
+}
+
 void* Allocator::mem_alloc(size_t size)
 {
 	void* ptr = NULL;
@@ -178,42 +215,6 @@ void* Allocator::mem_alloc(size_t size)
 	return ptr;
 }
 
-bool Allocator::isValid(void* address) 
-{
-	if (address < memory || address > memory + PAGE_SIZE * pageNum)
-	{
-		return false;
-	}
-
-	size_t pageNumber = ((uint8_t*)address - memory) / PAGE_SIZE;
-	uint8_t* pagePtr = memory + pageNumber * PAGE_SIZE;
-	bool isValid = false;
-
-	if (pageHeaders[pagePtr].state == DividedIntoBlocks) 
-	{
-		uint8_t* currBlock = pagePtr;
-		for(int i = 0; i < PAGE_SIZE / pageHeaders[pagePtr].classSize; i++)
-		{
-			if (currBlock == address) 
-			{
-				isValid = true;
-				break;
-			}
-			currBlock += pageHeaders[pagePtr].classSize;
-		}
-	}
-	else if(pageHeaders[pagePtr].state == MultiPageBlock)
-	{
-		size_t pageNumInBlock = pageHeaders[pagePtr].classSize / PAGE_SIZE;
-		if (pageHeaders[pagePtr].blocksAmount + 1 == pageNumInBlock)
-		{
-			isValid = pagePtr == address;
-		}
-	}
-
-	return isValid;
-}
-
 void* Allocator::mem_realloc(void* address, size_t size)
 {
 	if (address == NULL) 
@@ -264,8 +265,17 @@ void* Allocator::mem_realloc(void* address, size_t size)
 				}
 				currPage = nextPage;
 			}
+
 			sort(freePages.begin(), freePages.end());
-			ptr = size <= PAGE_SIZE / 2 ? mem_alloc(size) : address;
+
+			if (size <= PAGE_SIZE / 2) 
+			{
+				ptr = mem_alloc(size);
+				for (int i = 0; i < size; i++)
+				{
+					*((uint8_t*)ptr + i + 1) = *((uint8_t*)address + i);
+				}
+			}
 		}
 		else if (oldPageNum < newPageNum) 
 		{
@@ -344,6 +354,7 @@ void Allocator::mem_free(void* address)
 			pageHeaders[currPage].classSize = 0;
 			pageHeaders[currPage].blocksAmount = 0;
 			pageHeaders[currPage].freeBlockPtr = NULL;
+
 			freePages.push_back(currPage);
 
 			currPage = nextPage;
@@ -354,6 +365,7 @@ void Allocator::mem_free(void* address)
 	{
 		size_t classSize = pageHeaders[pagePtr].classSize;
 		uint8_t* currBlock = pagePtr;
+
 		for (int i = 0; i < PAGE_SIZE / classSize; i++) 
 		{
 			if (currBlock == address) 
