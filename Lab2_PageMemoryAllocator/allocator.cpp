@@ -157,7 +157,7 @@ void* Allocator::mem_alloc(size_t size)
 	if (size <= PAGE_SIZE / 2) 
 	{
 		//size incremented, because 1 byte needed to header, which consist bool flag(determines block is free or not)
-		size_t classSize = roundToPowerOfTwo(++size);
+		size_t classSize = roundToPowerOfTwo(size + 1);
 
 		if (classifiedPages[classSize].empty()) 
 		{
@@ -183,7 +183,7 @@ void* Allocator::mem_alloc(size_t size)
 			auto iterator = find(classifiedPages[classSize].begin(), classifiedPages[classSize].end(), pagePtr);
 			classifiedPages[classSize].erase(iterator);
 		}
-
+		cout << "mem_alloc(" << size << ") - Allocate block from class " << classSize << endl;
 		ptr = allocBlock;
 	}
 	else 
@@ -210,6 +210,8 @@ void* Allocator::mem_alloc(size_t size)
 
 			freePages.erase(freePages.begin());
 		}
+
+		cout << "mem_alloc(" << size << ") - Allocate " << neededNumOfPage << " pages" << endl;
 	}
 
 	return ptr;
@@ -382,6 +384,9 @@ void Allocator::mem_free(void* address)
 			pageHeaders[pagePtr] = { Free, 0, 0, NULL };
 			freePages.push_back(pagePtr);
 			sort(freePages.begin(), freePages.end());
+
+			auto iterator = find(classifiedPages[classSize].begin(), classifiedPages[classSize].end(), pagePtr);
+			classifiedPages[classSize].erase(iterator);		
 		}
 		if (pageHeaders[pagePtr].blocksAmount == 1) 
 		{
