@@ -264,6 +264,7 @@ void* Allocator::mem_realloc(void* address, size_t size)
 				{
 					pageHeaders[currPage].classSize = newPageNum * PAGE_SIZE;
 					pageHeaders[currPage].blocksAmount = newPageNum - i - 1;
+					pageHeaders[currPage].freeBlockPtr = newPageNum - 1 == i ? NULL : nextPage;
 				}
 				currPage = nextPage;
 			}
