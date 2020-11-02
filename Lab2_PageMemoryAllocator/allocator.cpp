@@ -383,6 +383,11 @@ void Allocator::mem_free(void* address)
 			freePages.push_back(pagePtr);
 			sort(freePages.begin(), freePages.end());
 		}
+		if (pageHeaders[pagePtr].blocksAmount == 1) 
+		{
+			classifiedPages[classSize].push_back(pagePtr);
+			sort(classifiedPages[classSize].begin(), classifiedPages[classSize].end());
+		}
 	}
 	else 
 	{
