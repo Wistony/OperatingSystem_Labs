@@ -2,12 +2,13 @@
 #include <iostream>
 using namespace std;
 
-#define MIN_PRIORITY 1
-#define MAX_PRIORITY 32
+#define MAX_PRIORITY 1
+#define MIN_PRIORITY 32
 
 
 struct Task 
 {
+	unsigned int Id;
 	int Duration;
 	int Priority;
 
@@ -22,7 +23,7 @@ struct CompareTaskPriority
 {
 	bool operator()(Task const& t1, Task const& t2)
 	{ 
-		return t1.Priority < t2.Priority;
+		return t1.Priority > t2.Priority;
 	}
 };
 
@@ -33,4 +34,7 @@ private:
 
 public: 
 	void AddTask(Task);
+	void ExecuteTask();
+	Task* MaxPriority();
+
 };
