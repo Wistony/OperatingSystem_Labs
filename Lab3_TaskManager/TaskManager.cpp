@@ -13,13 +13,11 @@ void TaskManager::AddTask(Task task)
 {
 	_lock.lock();
 
-	cout << " Generate new task: Id - " << task.Id << ", Duration - " << task.Duration << " ms, Prioriy - " << task.Priority << endl;
+	cout << " New task ADDED: Id - " << task.Id << ", Dur: " << task.Duration << " ms, Pr: " << task.Priority << endl;
 	task_queue[task.Priority - 1].push(task);
 	findMaxPriority();
 
 	_lock.unlock();
-
-	dump();
 }
 
 void TaskManager::findMaxPriority() 
@@ -48,6 +46,8 @@ void TaskManager::ExecuteTask()
 		return;
 	}
 
+	dump();
+
 	Task task = task_queue[currentMaxPriority - 1].front();
 
 	_lock.lock();
@@ -56,7 +56,8 @@ void TaskManager::ExecuteTask()
 
 	findMaxPriority();
 	
-	int start = clock();
+	cout << " Execution STARTED: Id: " << task.Id << ", Dur: " << task.Duration << " ms, Pr: " << task.Priority << endl;
+
 
 	int duration = task.Duration;
 	while (duration != 0)
@@ -65,30 +66,38 @@ void TaskManager::ExecuteTask()
 		{
 			Sleep(5);
 			duration -= 5;
+			if (currentMaxPriority != 0 && currentMaxPriority < task.Priority) 
+			{
+				task.Duration = duration;
+				_lock.lock();
+				cout << " Execution STOPED: Id: " << task.Id << ", Dur left: " << task.Duration << " ms, Pr: " << task.Priority << endl;
+				_lock.unlock();
+				AddTask(task);
+				break;
+			}
 		}
-		else {
+		else
+		{
 			Sleep(task.Duration);
-			duration= 0;
+			duration = 0;
+			_lock.lock();
+			cout << " Execution ENDED: Id: " << task.Id << ", Dur: " << task.Duration << " ms, Pr: " << task.Priority << endl;
+			_lock.unlock();
+
 		}
 
 	};
-	//Sleep(task.Duration);
-	int end = clock();
-	cout << " EXECUTE task: Id - " << task.Id << ", Duration - " << task.Duration << " ms, Priority - " << task.Priority << endl;
-
-
-	cout << "Time: " << (end - start) << endl;
 	return;
 }
 
 void TaskManager::dump() 
 {
 	_lock.lock();
-	cout << endl << "======================================================" << endl;
+	cout << endl << " ==========================================" << endl << endl;
 	for (int i = 0; i < MIN_PRIORITY; i++)
 	{
 		vector<queue<Task>> queue = task_queue;
-		cout << queue[i].size() << " task with priority " << i + 1 << endl;
+		cout << "  " <<queue[i].size() << " task with priority " << i + 1 << endl;
 		while (!queue[i].empty()) 
 		{
 			Task task = queue[i].front();
@@ -96,6 +105,6 @@ void TaskManager::dump()
 			cout << "\t Id: " << task.Id << ", Dur: " << task.Duration << " ms, Pr: " << task.Priority << endl;
 		}
 	}
-	cout << endl << "======================================================" << endl;
+	cout << endl << " ==========================================" << endl << endl;
 	_lock.unlock();
 }

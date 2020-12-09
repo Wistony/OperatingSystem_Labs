@@ -5,6 +5,9 @@ using namespace std;
 
 #define MAX_PRIORITY 1
 #define MIN_PRIORITY 4
+#define TASK_COUNT 5
+#define MAX_DURATION 100
+
 
 
 struct Task 
