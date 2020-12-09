@@ -1,9 +1,10 @@
 #include <queue>
 #include <iostream>
+#include <mutex>
 using namespace std;
 
 #define MAX_PRIORITY 1
-#define MIN_PRIORITY 32
+#define MIN_PRIORITY 4
 
 
 struct Task 
@@ -12,8 +13,9 @@ struct Task
 	int Duration;
 	int Priority;
 
-	Task(int dur, int pr) 
+	Task(int id,int dur, int pr) 
 	{
+		Id = id;
 		Duration = dur;
 		Priority = pr;
 	}
@@ -30,11 +32,14 @@ struct CompareTaskPriority
 class TaskManager 
 {
 private:
+	recursive_mutex _lock;
 	vector<queue<Task>> task_queue;
+	int currentMaxPriority;
 
 public: 
+	TaskManager();
 	void AddTask(Task);
 	void ExecuteTask();
-	Task* MaxPriority();
-
+	void findMaxPriority();
+	void dump();
 };
