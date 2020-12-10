@@ -54,11 +54,11 @@ void TaskManager::ExecuteTask()
 	_lock.lock();
 	task_queue[currentMaxPriority - 1].pop();
 	taskInQueue -= 1;
-	_lock.unlock();
 
 	findMaxPriority();
 	
 	cout << " Execution STARTED: Id: " << task.Id << ", Dur: " << task.Duration << " ms, Pr: " << task.Priority << endl;
+	_lock.unlock();
 
 	int duration = task.Duration;
 	while (duration != 0)
@@ -113,6 +113,25 @@ void TaskManager::ExecuteTask()
 	return;
 }
 
+void TaskManager::dump()
+{
+	_lock.lock();
+	cout << endl << " ==========================================" << endl << endl;
+	for (int i = 0; i < MIN_PRIORITY; i++)
+	{
+		vector<queue<Task>> queue = task_queue;
+		cout << "  " << queue[i].size() << " task with priority " << i + 1 << endl;
+		while (!queue[i].empty())
+		{
+			Task task = queue[i].front();
+			queue[i].pop();
+			cout << "\t Id: " << task.Id << ", Dur: " << task.Duration << " ms, Pr: " << task.Priority << endl;
+		}
+	}
+	cout << endl << " ==========================================" << endl << endl;
+	_lock.unlock();
+}
+
 vector<int> TaskManager::calculateAverageWaitingTimeByPriority()
 {	
 	vector<int> averageWaitingTime(MIN_PRIORITY);
@@ -144,10 +163,6 @@ vector<int> TaskManager::calculateAverageWaitingTimeByPriority()
 
 	}
 
-	cout << "GGGGGGGGGGGGGGGGGGGGl: " << s / c << endl;
-	cout << "SUM : " << s << endl;
-	cout << "WAITING: " << calculateWaitingTime() << endl;
-
 	return averageWaitingTime;
 }
 
@@ -176,23 +191,4 @@ bool TaskManager::isEnd()
 bool TaskManager::queueIsEmpty() 
 {
 	return taskInQueue == 0;
-}
-
-void TaskManager::dump() 
-{
-	_lock.lock();
-	cout << endl << " ==========================================" << endl << endl;
-	for (int i = 0; i < MIN_PRIORITY; i++)
-	{
-		vector<queue<Task>> queue = task_queue;
-		cout << "  " <<queue[i].size() << " task with priority " << i + 1 << endl;
-		while (!queue[i].empty()) 
-		{
-			Task task = queue[i].front();
-			queue[i].pop();
-			cout << "\t Id: " << task.Id << ", Dur: " << task.Duration << " ms, Pr: " << task.Priority << endl;
-		}
-	}
-	cout << endl << " ==========================================" << endl << endl;
-	_lock.unlock();
 }
