@@ -116,7 +116,8 @@ void TaskManager::ExecuteTask()
 vector<int> TaskManager::calculateAverageWaitingTimeByPriority()
 {	
 	vector<int> averageWaitingTime(MIN_PRIORITY);
-
+	int s = 0;
+	int c = 0;
 	for (int i = 0; i < MIN_PRIORITY; i++) 
 	{
 		int sum = 0;
@@ -129,6 +130,8 @@ vector<int> TaskManager::calculateAverageWaitingTimeByPriority()
 				sum += waitingTime[j].Duration;
 			}
 		}
+		s += sum;
+		c += count;
 
 		if (count != 0) 
 		{
@@ -138,7 +141,12 @@ vector<int> TaskManager::calculateAverageWaitingTimeByPriority()
 		{
 			averageWaitingTime[i] = 0;
 		}
+
 	}
+
+	cout << "GGGGGGGGGGGGGGGGGGGGl: " << s / c << endl;
+	cout << "SUM : " << s << endl;
+	cout << "WAITING: " << calculateWaitingTime() << endl;
 
 	return averageWaitingTime;
 }
@@ -151,12 +159,9 @@ int TaskManager::calculateAverageWaitingTime()
 int TaskManager::calculateWaitingTime() 
 {
 	int sum = 0;
-	for (int i = 0; i < MIN_PRIORITY; i++)
+	for (int i = 0; i < waitingTime.size(); i++)
 	{
-		for (int j = 0; j < waitingTime.size(); j++)
-		{
-			sum += waitingTime[j].Duration;
-		}
+		sum += waitingTime[i].Duration;
 	}
 
 	return sum;

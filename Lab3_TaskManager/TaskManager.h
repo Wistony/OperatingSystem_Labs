@@ -6,10 +6,10 @@
 using namespace std;
 
 #define MAX_PRIORITY 1
-#define MIN_PRIORITY 8
-#define TASK_COUNT 20
-#define MAX_DURATION 50
-#define INTENSITY 400
+#define MIN_PRIORITY 16
+#define TASK_COUNT 100
+#define MAX_DURATION 20
+#define INTENSITY 1
 
 
 
