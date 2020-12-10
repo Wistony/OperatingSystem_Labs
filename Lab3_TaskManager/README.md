@@ -53,9 +53,9 @@ Task task = Task(i + 1, rand() % MAX_DURATION + 1, rand() % MIN_PRIORITY + 1);
 Запустимо програму з наступними параметрами.
 ```
 #define MAX_PRIORITY 1
-#define MIN_PRIORITY 4
-#define TASK_COUNT 10
-#define MAX_DURATION 50
+#define MIN_PRIORITY 16
+#define TASK_COUNT 50
+#define MAX_DURATION 100
 #define INTENSITY 100
 ```
 
@@ -70,13 +70,19 @@ Task task = Task(i + 1, rand() % MAX_DURATION + 1, rand() % MIN_PRIORITY + 1);
 
 ![Screenshot1](https://github.com/Wistony/OperatingSystem_Labs/blob/master/Lab3_TaskManager/img/2.png)
 
+#
+
 ##### Графік залежності простою ресурсу від інтенсивності вхідного потоку заявок
 
 ![Screenshot1](https://github.com/Wistony/OperatingSystem_Labs/blob/master/Lab3_TaskManager/img/3.png)
 
+#
+
 ##### Графік залежності середнього часу очікування від  пріоритету
 
 ![Screenshot1](https://github.com/Wistony/OperatingSystem_Labs/blob/master/Lab3_TaskManager/img/4.png)
+
+#
 
 #### Висновок 
 Перевагою даного алгоритму є те, що завдання із найвищим пріоритетом виконуються дуже швидко. Цьому сприяє наявність в алгоритмі пріоритетів як таких та витіснення.
