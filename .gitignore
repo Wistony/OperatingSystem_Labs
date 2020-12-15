@@ -405,3 +405,9 @@ healthchecksdb
 MigrationBackup/
 
 # End of https://www.gitignore.io/api/c++,windows,visualstudio
+Lab3_TaskManager/Lab3_TaskManager.vcxproj.filters
+Lab3_TaskManager/Lab3_TaskManager.sln
+Lab3_TaskManager/Lab3_TaskManager.vcxproj
+Lab4_ProcessScheduling/Lab4_ProcessScheduling.sln
+Lab4_ProcessScheduling/Lab4_ProcessScheduling.vcxproj
+Lab4_ProcessScheduling/Lab4_ProcessScheduling.vcxproj.filters
