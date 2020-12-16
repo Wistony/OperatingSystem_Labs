@@ -40,6 +40,20 @@ void printMatrix(int** matrix)
 	}
 }
 
+int calculateSum(int** matrix)
+{
+	int sum = 0;
+	for (int i = 0; i < N; i++)
+	{
+		for (int j = 0; j < N; j++)
+		{
+			sum += matrix[i][j];
+		}
+	}
+	
+	return sum;
+}
+
 int main() 
 {
 	int** matrix;
@@ -60,6 +74,7 @@ int main()
 
 	cout << " Resulting matrix: " << endl;
 	printMatrix(matrix);
+	cout << " Total cost of tasks: " << calculateSum(matrix) << endl;
 
 	return 0;
 }
