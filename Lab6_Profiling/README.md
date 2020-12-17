@@ -1,107 +1,189 @@
-# OperatingSystem - Lab5
+# OperatingSystem - Lab6
 
-##  Оптимізація роботи з пам'яттю
+##  Профілювання
 
 ### Варіант №1 
-**Початковий код:**
+**Початковий неоптимізований код:**
 ```
-void source_code() 
+#include <windows.h>
+#include <stdio.h>
+#include <string>
+#include <iostream>
+
+using namespace std;
+
+void new_func1(void);
+
+void DrawCircle(void)
 {
-    int a[] = { 0,0 };
-    int res = 0;
+	for (int i = 0; i < 10; i++)
+	{
+		//process of drawing
+		Sleep(100);
+	}
 
-    for (int j = 0; j < 10000000; j++)
-    {
-        a[0]++;
-        a[0]++;
-    }
+	return;
+}
 
-    a[1] = a[0];
+static void DrawSquare(void)
+{
+	for (int i = 0; i < 10; i++)
+	{
+		//process of drawing
+		Sleep(100);
+	}
+	return;
+}
+
+int main(void)
+{
+	printf("\n Inside main()\n");
+	int typeOfShape = 1;
+
+
+	int start_time;
+	int end_time;
+
+	for (int i = 0; i < 0xffffff; i++);
+	{
+		switch (typeOfShape) {
+		case 1:
+			DrawSquare();
+			break;
+		case 2:
+			DrawCircle();
+			break;
+		}
+	}
+
+	return 0;
 }
 ```
 
-Розберемо кожен рядок: у першому рядку створюється масив із двох елементів, після чого створюється змінна res, якій присвоюється значення 0. Далі запускається цикл розміром в 10000000 ітерацій, на кожній ітерації якого перший елемент масиву інкрементується двічі. Після чого другому елементу масиву присвоюється значення першого. 
+В даній лабораторній використано ручне профілювання. В наступному коді рахується час виконання кожної функції та загальний час виконання програми. 
 
-Головним простором для оптимізації даного коду є цикл. У циклі той самий елемент масиву інкрементується двічі. Це означає, що на кожній ітерації циклу програма двічі звертається до тієї ж самої комірки пам'яті, де зберігається перший елемент масиву.
+```
+void new_func1(void);
+
+void DrawCircle(void)
+{
+	for (int i = 0; i < 10; i++)
+	{
+		//process of drawing
+		Sleep(100);
+	}
+
+	return;
+}
+
+static void DrawSquare(void)
+{
+	for (int i = 0; i < 10; i++)
+	{
+		//process of drawing
+		Sleep(100);
+	}
+	return;
+}
+
+int main(void)
+{
+	printf("\n Inside main()\n\n");
+	int typeOfShape = 1;
+
+
+	int start_time;
+	int end_time;
+
+	for (int i = 0; i < 0xffffff; i++);
+	{
+		switch (typeOfShape) {
+		case 1:
+			start_time = clock();
+			DrawSquare();
+			end_time = clock();
+			cout << "Execution time DrawSquare(): " << end_time - start_time << " ms" << endl;
+			break;
+		case 2:
+			start_time = clock();
+			DrawCircle();
+			end_time = clock();
+			cout << "Execution time DrawCircle(): " << end_time - start_time << " ms" << endl;
+			break;
+		}
+	}
+
+	cout << "Total execution time: " << clock() << " ms" << endl;
+
+	return 0;
+}
+```
+
+**Результати профілювання неоптимізованого коду:**
+
+![Screenshot1](https://github.com/Wistony/OperatingSystem_Labs/blob/master/Lab6_Profiling/img/1.png)
+
+Добре видно, що майже весь час виконання програми забирає на себе функція DrawCircle() або DrawSquare(). Усе тому що дані функції містять в собі функцію Sleep(), видалимо її. Окрім цього в програмі є цикл, який виконує лише 1 ітерацію, тому видалимо його теж.
 
 **Оптимізуємо даний код:** 
 
 ```
-void updated_code_1()
+void new_func1(void);
+
+void DrawCircle(void)
 {
-    int a[] = { 0,0 };
-    int res = 0;
+	for (int i = 0; i < 10; i++)
+	{
+		//process of drawing
+	}
 
-    for (int j = 0; j < 10000000; j++)
-    {
-        a[0] += 2;
-    }
+	return;
+}
 
-    a[1] = a[0];
+static void DrawSquare(void)
+{
+	for (int i = 0; i < 10; i++)
+	{
+		//process of drawing
+	}
+	return;
+}
+
+int main(void)
+{
+	printf("\n Inside main()\n\n");
+	int typeOfShape = 1;
+
+
+	int start_time;
+	int end_time;
+
+	switch (typeOfShape) {
+	case 1:
+		start_time = clock();
+		DrawSquare();
+		end_time = clock();
+		cout << "Execution time DrawSquare(): " << end_time - start_time << " ms" << endl;
+		break;
+	case 2:
+		start_time = clock();
+		DrawCircle();
+		end_time = clock();
+		cout << "Execution time DrawCircle(): " << end_time - start_time << " ms" << endl;
+		break;
+	}
+
+	cout << "Total execution time: " << clock() << " ms" << endl;
+
+	return 0;
 }
 ```
 
-Тепер на кожній ітерації циклу перший елемент масиву одразу інкрементується на 2. Це зменшує кількість звернень до пам'яті, де зберігається перший елемент масиву вдвічі.
+**Результати виконання оптимізованого коду:**
 
-**Спробуємо ще оптимізувати наш код:** 
+![Screenshot1](https://github.com/Wistony/OperatingSystem_Labs/blob/master/Lab6_Profiling/img/2.png)
 
-```
-void updated_code_2()
-{
-    int a[] = { 0,0 };
-    int res = 0;
-
-    for (int j = 0; j < 10000000; j++)
-    {
-        res += 2;
-    }
-
-    a[1] = a[0] = res;
-}
-```
-
-Нехай інкрементується змінна res, а не елемент масиву. А після закінчення циклу присвоїмо значення змінної res елементам масиву.
-
-Тепер перевіримо середній час виконання кожної із функцій. Кожна функція виконується 2000 разів, після чого рахується середній час її виконання. 
-
-```
-    int N = 2000;
-    int executionTime = 0;
-    for (int i = 0; i < N; i++)
-    {
-        int start_time = clock();
-        source_code();
-        int end_time = clock();
-        executionTime = executionTime + end_time - start_time;
-    }
-    cout << "\tAverage execution time for source_code(): " << executionTime / N << " ms" << endl;
-
-    executionTime = 0;
-    for (int i = 0; i < N; i++)
-    {
-        int start_time = clock();
-        updated_code_1();
-        int end_time = clock();
-        executionTime = executionTime + end_time - start_time;
-    }
-    cout << "\tAverage execution time for updated_code_1(): " << executionTime / N << " ms" << endl;
-
-    executionTime = 0;
-    for (int i = 0; i < N; i++)
-    {
-        int start_time = clock();
-        updated_code_2();
-        int end_time = clock();
-        executionTime = executionTime + end_time - start_time;
-    }
-    cout << "\tAverage execution time for updated_code_2(): " << executionTime / N << " ms" << endl;
-```
-
-**Результати виконання:**
-
-![Screenshot1](https://github.com/Wistony/OperatingSystem_Labs/blob/master/Lab5_MemoryOptimisation/img/1.png)
-
-Можна зробити висновок, що звернення на кожній ітерації циклу до змінної res замість елементу масива не прискорило виконання коду. Це логічно, оскільки елемент масиву є такою ж змінною як і змінна res. Тобто доступ до елементу масиву і змінної відбувається за однаковий час. У свою чергу прискорення виконання даного коду було досягнуто завдяки заміні інкремента на 1 двічі на кожній ітерації циклу на інкремент на 2 на кожній ітерації циклу. Це дозволило зменшити кількість звернень до елемента масиву вдвічі, що прискорило виконання коду в 1.5 раза. 
+За допомогою профілювання було оптимізовано даний код. 
 
 
 
