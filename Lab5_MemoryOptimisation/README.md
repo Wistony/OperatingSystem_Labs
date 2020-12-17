@@ -1,6 +1,6 @@
 # OperatingSystem - Lab5
 
-##  Оптимизація роботи з пам'яттю
+##  Оптимізація роботи з пам'яттю
 
 ### Варіант №1 
 Початковий код:
@@ -63,6 +63,41 @@ void updated_code_2()
 Нехай інкрементується змінна res, а не елемент масиву. А після закінчення циклу присвоїмо значення змінної res елементам масиву.
 
 Тепер перевіримо середній час виконання кожної із функцій. Кожна функція виконується 2000 разів, після чого рахується середній час її виконання. 
+
+```
+    int N = 2000;
+    int executionTime = 0;
+    for (int i = 0; i < N; i++)
+    {
+        int start_time = clock();
+        source_code();
+        int end_time = clock();
+        executionTime = executionTime + end_time - start_time;
+    }
+    cout << "\tAverage execution time for source_code(): " << executionTime / N << " ms" << endl;
+
+    executionTime = 0;
+    for (int i = 0; i < N; i++)
+    {
+        int start_time = clock();
+        updated_code_1();
+        int end_time = clock();
+        executionTime = executionTime + end_time - start_time;
+    }
+    cout << "\tAverage execution time for updated_code_1(): " << executionTime / N << " ms" << endl;
+
+    executionTime = 0;
+    for (int i = 0; i < N; i++)
+    {
+        int start_time = clock();
+        updated_code_2();
+        int end_time = clock();
+        executionTime = executionTime + end_time - start_time;
+    }
+    cout << "\tAverage execution time for updated_code_2(): " << executionTime / N << " ms" << endl;
+```
+
+**Результати виконання:**
 
 ![Screenshot1](https://github.com/Wistony/OperatingSystem_Labs/blob/master/Lab5_MemoryOptimisation/img/1.png)
 =
